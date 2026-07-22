@@ -1,0 +1,212 @@
+###############################################################################
+# Deployment
+#
+# A Deployment manages the desired state of the application.
+#
+# Responsibilities:
+# - Creates and manages ReplicaSets
+# - Ensures the desired number of Pods are running
+# - Performs rolling updates
+# - Automatically recreates failed Pods
+###############################################################################
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  ###########################################################################
+  # Resource Name
+  ###########################################################################
+  name: {{ include "ui.fullname" . }}
+
+  ###########################################################################
+  # Common Labels
+  ###########################################################################
+  labels: {{ include "ui.labels" . | nindent 4 }}
+
+spec:
+
+  ###########################################################################
+  # Desired number of replicas
+  ###########################################################################
+  replicas: {{ .Values.replicaCount }}
+
+  ###########################################################################
+  # Deployment Selector
+  #
+  # MUST match the Pod labels below.
+  ###########################################################################
+  selector:
+    matchLabels: {{ include "ui.selectorLabels" . | nindent 6 }}
+
+  ###########################################################################
+  # Pod Template
+  ###########################################################################
+  template:
+
+    metadata:
+
+      labels: {{ include "ui.selectorLabels" . | nindent 8 }}
+
+    spec:
+
+      #######################################################################
+      # Application Container
+      #######################################################################
+      containers:
+
+        - name: {{ include "ui.name" . }}
+
+          ###################################################################
+          # Container Image
+          ###################################################################
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          ###################################################################
+          # Exposed Container Port
+          ###################################################################
+          ports:
+
+            - name: http
+
+              containerPort: {{ .Values.service.targetPort }}
+
+              protocol: TCP
+
+          ###################################################################
+          # Environment Variables
+          #
+          # Explicitly map each configuration value instead of importing
+          # everything via envFrom.
+          ###################################################################
+          env:
+
+            #################################################################
+            # Spring Profile
+            #################################################################
+            - name: SPRING_PROFILES_ACTIVE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "ui.fullname" . }}-config
+                  key: SPRING_PROFILES_ACTIVE
+
+            #################################################################
+            # Application Name
+            #################################################################
+            - name: SPRING_APPLICATION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "ui.fullname" . }}-config
+                  key: SPRING_APPLICATION_NAME
+
+            #################################################################
+            # Logging Level
+            #################################################################
+            - name: LOGGING_LEVEL_ROOT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "ui.fullname" . }}-config
+                  key: LOGGING_LEVEL_ROOT
+
+            #################################################################
+            # Feature Flag
+            #################################################################
+            - name: FEATURE_X_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "ui.fullname" . }}-config
+                  key: FEATURE_X_ENABLED
+
+            #################################################################
+            # Database Username
+            #################################################################
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ui.fullname" . }}-secret
+                  key: DB_USERNAME
+
+            #################################################################
+            # Database Password
+            #################################################################
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ui.fullname" . }}-secret
+                  key: DB_PASSWORD
+
+            #################################################################
+            # JWT Secret
+            #################################################################
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ui.fullname" . }}-secret
+                  key: JWT_SECRET
+
+          ###################################################################
+          # Startup Probe
+          #
+          # Allows slow-starting applications to initialize before Kubernetes
+          # begins running liveness or readiness checks.
+          ###################################################################
+          startupProbe:
+
+            httpGet:
+
+              path: /actuator/health
+
+              port: http
+
+            periodSeconds: 5
+
+            failureThreshold: 30
+
+          ###################################################################
+          # Readiness Probe
+          #
+          # Determines whether the Pod is ready to receive traffic.
+          ###################################################################
+          readinessProbe:
+
+            httpGet:
+
+              path: /actuator/health/readiness
+
+              port: http
+
+            initialDelaySeconds: 10
+
+            periodSeconds: 10
+
+            timeoutSeconds: 3
+
+            failureThreshold: 3
+
+          ###################################################################
+          # Liveness Probe
+          #
+          # Restarts the container if the application becomes unhealthy.
+          ###################################################################
+          livenessProbe:
+
+            httpGet:
+
+              path: /actuator/health/liveness
+
+              port: http
+
+            initialDelaySeconds: 30
+
+            periodSeconds: 20
+
+            timeoutSeconds: 3
+
+            failureThreshold: 3
+
+          ###################################################################
+          # CPU & Memory Resources
+          ###################################################################
+          resources: {{- toYaml .Values.resources | nindent 12 }}

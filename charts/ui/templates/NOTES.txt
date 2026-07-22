@@ -1,0 +1,92 @@
+Thank you for installing {{ .Chart.Name }}!
+
+###############################################################################
+# Release Information
+###############################################################################
+
+Release Name:
+  {{ .Release.Name }}
+
+Namespace:
+  {{ .Release.Namespace }}
+
+Chart Version:
+  {{ .Chart.Version }}
+
+Application Version:
+  {{ .Chart.AppVersion }}
+
+###############################################################################
+# Verify the Deployment
+###############################################################################
+
+Check the Deployment:
+
+  kubectl get deployment -n {{ .Release.Namespace }}
+
+Check the Pods:
+
+  kubectl get pods -n {{ .Release.Namespace }}
+
+Check the Service:
+
+  kubectl get svc -n {{ .Release.Namespace }}
+
+###############################################################################
+# Access the Application
+###############################################################################
+
+If using ClusterIP:
+
+  kubectl port-forward \
+  svc/{{ include "ui.fullname" . }} \
+  8080:{{ .Values.service.port }} \
+  -n {{ .Release.Namespace }}
+
+Then open:
+
+  http://localhost:8080
+
+###############################################################################
+# If Ingress is Enabled
+###############################################################################
+
+{{- if .Values.ingress.enabled }}
+
+Ingress Host:
+
+  http://{{ .Values.ingress.host }}
+
+Verify the Ingress:
+
+  kubectl get ingress -n {{ .Release.Namespace }}
+
+{{- end }}
+
+###############################################################################
+# Upgrade the Release
+###############################################################################
+
+helm upgrade {{ .Release.Name }} . \
+  --namespace {{ .Release.Namespace }}
+
+###############################################################################
+# Uninstall the Release
+###############################################################################
+
+helm uninstall {{ .Release.Name }} \
+  --namespace {{ .Release.Namespace }}
+
+###############################################################################
+# Troubleshooting
+###############################################################################
+
+View Pod Logs:
+
+  kubectl logs deployment/{{ include "ui.fullname" . }} \
+  -n {{ .Release.Namespace }}
+
+Describe the Deployment:
+
+  kubectl describe deployment/{{ include "ui.fullname" . }} \
+  -n {{ .Release.Namespace }}
