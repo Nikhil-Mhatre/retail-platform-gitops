@@ -6,8 +6,8 @@ replicaCount: 1
 # Container Image
 ###############################################################################
 image:
-  repository: ""
-  tag: "8c2d930"
+  repository: "nikhilmhatre0317/retail-platform-ui"
+  tag: "5ad8226"
   pullPolicy: IfNotPresent
 ###############################################################################
 # Service
