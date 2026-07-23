@@ -7,7 +7,7 @@ replicaCount: 1
 ###############################################################################
 image:
   repository: "nikhilmhatre0317/retail-platform-ui"
-  tag: "5ad8226"
+  tag: "b7b6c6d"
   pullPolicy: IfNotPresent
 ###############################################################################
 # Service
