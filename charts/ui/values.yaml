@@ -6,8 +6,8 @@ replicaCount: 1
 # Container Image
 ###############################################################################
 image:
-  repository: docker.io/nikhilmhatre0317/retail_platform_ui
-  tag: "caa2c96"
+  repository: ""
+  tag: "9ca8988"
   pullPolicy: IfNotPresent
 ###############################################################################
 # Service
